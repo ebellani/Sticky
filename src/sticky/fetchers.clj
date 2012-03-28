@@ -1,27 +1,26 @@
-(ns sticky.frontier
-  "The Web connection. Agents that collect pages."
-  (:require [http.async.client :as c]))
+(ns sticky.fetchers
+  "Agents used to collect pages.")
 
 (defn create-fetchers [number-of-agents agent-size dump-fun]
   "Creates a number of fetchers that will save the http client into a
   vector and adds to each of them a watcher that observes when the
   agent vector grows beyond a given limit to call the dump function
   with the vector.
-,
+
   The return vector contains all the agents, with one of them in a
-  pair with the marker keyword, indicating that this should be the
-  one to be used next."
+  pair with the marker keyword, indicating that this should be the one
+  to be used next."
   (let [agnt-initial-state []
         agnts (for [n (range number-of-agents)]
                 (let [current-agent (agent agnt-initial-state)
                       watcher-function (fn [k agnt old-state new-state]
                                          (when (> (count new-state)
                                                   agent-size)
-                                           (dump-fun agnt new-state)
                                            ;; restart the agnt state
                                            (send-off agnt
                                                      (fn [x & args]
-                                                       agnt-initial-state))))]
+                                                       agnt-initial-state))
+                                           (dump-fun new-state)))]
                   (add-watch current-agent :dumper-watcher watcher-function)
                   current-agent))]
     (vec (conj (rest agnts)
@@ -54,9 +53,3 @@
                current-element])
             :else (recur (inc i))))))
 
-
-;; (loop [fetchers (create-fetchers 10 3 println)
-;;        n     0]
-;;   (when (< n 100)
-;;     (recur (send-to-a-fetcher fetchers conj "ping")
-;;            (inc n))))
