@@ -10,16 +10,17 @@
                  "xxx" "true"}
         data    {"x" "1.23"
                  "y" "99"}
-        header  '("my-name" "my value")
+        headers  {"Accept-Encoding" "gzip,deflate,sdch"
+                 "Accept-Charset" "ISO-8859-1,utf-8;q=0.7,*;q=0.3"}
         conn (build-connection test-url
                         {:cookies cookies
                          :data    data
-                         :header  header
+                         :headers  headers
                          :type    :post})
         req (.request conn)]
     (is (= (.toString (.url req)) test-url))
     (is (= (.cookies req) cookies))
-    (is (.hasHeader req (first header)))))
+    (is (= (.headers req) headers))))
 
 (deftest document-macros-test
   (with-document "http://www.dreamsongs.com/DailyPoems.html"

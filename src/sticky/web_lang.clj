@@ -3,7 +3,7 @@
   documents from the web, slice and dice them, paginate and so
   forth."
   (:use [sticky.utils])
-  (:import [org.jsoup Jsoup Connection]
+  (:import [org.jsoup Jsoup Connection Connection$Method]
            [org.jsoup.select Selector]))
 
 (defonce
@@ -20,16 +20,18 @@
      documents."}
   *current-document* nil)
 
+(defmacro set-connection-attribute! [connection attr-symbol map]
+  `(doseq [[name# value#] ~map]
+    (. ~connection ~attr-symbol name# value#)))
+
 (defn- set-cookies! [connection map]
-  (doseq [[name value] map]
-    (.cookie connection name value)))
+  (set-connection-attribute! connection cookie map))
 
 (defn- set-data! [connection map]
-  (doseq [[name value] map]
-    (.data connection name value)))
+  (set-connection-attribute! connection data map))
 
-(defn- set-header! [connection [name value]]
-  (.header connection name value))
+(defn- set-headers! [connection map]
+  (set-connection-attribute! connection header map))
 
 (defn- set-user-agent! [])
 
@@ -47,7 +49,7 @@ with-connection macro."}
 
   {:cookies     set-cookies!
    :data        set-data!
-   :header      set-header!
+   :headers     set-headers!
    :user-agent  set-user-agent!
    :type        set-type!})
 
@@ -58,7 +60,7 @@ with-connection macro."}
 
 :cookies    => map of cookie name -> value pairs
 :data       => map of data parameters
-:header     => a seq of 2 strings, (header name, header value)
+:header     => map of headers. String -> string
 :user-agent => A string to set the request user-agent header.
 :type       => :post or :get. The default is :get. 
 "
